@@ -6,23 +6,23 @@ import { merge } from "@/lib/objects/merge";
 import { Offer, OfferError } from "@/types/offer";
 import { updateOffer } from "@/services/supabase/offers/offerRepository";
 
-const stepElevenSchema = z.object({
+const lastStepSchema = z.object({
   fillTheForm: z
     .string()
     .min(200, "Le champ 'fillTheForm' doit contenir au moins 200 caractères."),
 });
 
-export type StepElevenResponse = OfferError<{
+export type LastStepResponse = OfferError<{
   fillTheForm?: string[];
 }>;
 
 export async function saveOffer(
   offer: Offer,
   formData: FormData
-): Promise<StepElevenResponse> {
+): Promise<LastStepResponse> {
   const fillTheForm = formData.get("fillTheForm") as string;
 
-  const validationResult = stepElevenSchema.safeParse({ fillTheForm });
+  const validationResult = lastStepSchema.safeParse({ fillTheForm });
 
   if (!validationResult.success) {
     return {

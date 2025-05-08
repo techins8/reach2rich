@@ -1,21 +1,21 @@
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "@/contexts/form-context";
 import { useActionState } from "react";
-import { saveOffer, StepElevenResponse } from "./actions";
+import { saveOffer, LastStepResponse as LestStepResponse } from "./actions";
 import { Label } from "@/components/ui/label";
-import { FormFooter } from "@/components/blocks/offers/form-footer";
 import { cn } from "@/lib/utils";
 import { FormMessage } from "@/components/blocks/offers/form-message";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
-const initialState: StepElevenResponse = {};
+const initialState: LestStepResponse = {};
 
-export function StepEleven() {
-  const { offer, setStep, isLoading } = useForm();
+export function LastStep() {
+  const { offer, setStep, isFetching: isLoading } = useForm();
 
   const [state, formAction, pending] = useActionState(
-    async (prevState: StepElevenResponse, formData: FormData) => {
+    async (prevState: LestStepResponse, formData: FormData) => {
       if (!offer) return prevState;
 
       const result = await saveOffer(offer, formData);
@@ -48,12 +48,36 @@ export function StepEleven() {
           <FormMessage error={state?.inputErrors?.fillTheForm} />
         </div>
 
-        <FormFooter
-          pending={pending}
-          onPreviousClick={() => setStep(9)}
-          isGenerated={!!offer?.offerJson?.generated?.fillTheForm}
-          goToNextStep={() => undefined}
-        />
+        <div className="flex justify-between">
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(9)}
+              disabled={pending}
+            >
+              Précédent
+            </Button>
+          </div>
+
+          <div className="flex gap-2">
+            {/* {generatedValue && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isRegenerating || isGenerating}
+                loading={isRegenerating}
+                onClick={regenerateAction}
+              >
+                Régénérer
+              </Button>
+            )} */}
+
+            <Button type="submit" loading={pending} disabled={pending}>
+              Suivant
+            </Button>
+          </div>
+        </div>
       </div>
     </form>
   );

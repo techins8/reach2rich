@@ -28,8 +28,11 @@ export type OfferJson = {
   };
 };
 
-export type OfferError<T extends Record<string, string[]>> = {
+export type OfferError<
+  T extends Record<string | number, string[] | undefined>
+> = {
   error?: string;
   inputErrors?: T;
+  inputValues?: Record<string, string> | undefined;
   updatedOffer?: Offer;
 };

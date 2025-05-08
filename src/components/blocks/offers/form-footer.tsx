@@ -1,26 +1,49 @@
 import { Button } from "@/components/ui/button";
+import { useForm } from "@/contexts/form-context";
+import { getStepConfigs } from "@/services/offer/step-configs";
 
 interface FormFooterProps {
-  pending: boolean;
-  isGenerated: boolean;
-  goToNextStep: () => void;
-  onPreviousClick?: () => void;
+  stepNumber: number;
+  onRegenerateClick: () => void;
 }
 
 export const FormFooter = ({
-  pending,
-  isGenerated,
-  goToNextStep,
-  onPreviousClick,
+  stepNumber,
+  onRegenerateClick,
 }: FormFooterProps) => {
+  const { offer, setStep, isFetching: isLoading } = useForm();
+
+  const allSteps = getStepConfigs(offer);
+
+  const currentStep = allSteps[stepNumber];
+  const nextStep = allSteps[stepNumber + 1];
+
+  const generatedValue =
+    offer?.offerJson?.generated?.[
+      currentStep?.key as keyof typeof offer.offerJson.generated
+    ];
+
+  const isNextStepGenerated = nextStep?.isGenerated?.() ?? false;
+
+  const goToNextStep = () => {
+    setStep((stepNumber) =>
+      stepNumber + 1 <= allSteps.length ? stepNumber + 1 : stepNumber
+    );
+  };
+
+  const onPreviousClick = () => {
+    setStep((stepNumber) => (stepNumber > 0 ? stepNumber - 1 : stepNumber));
+  };
+
   return (
     <div className="flex justify-between">
       <div>
         {onPreviousClick && (
           <Button
+            type="button"
             variant="outline"
             onClick={onPreviousClick}
-            disabled={pending}
+            disabled={isLoading}
           >
             Précédent
           </Button>
@@ -28,25 +51,25 @@ export const FormFooter = ({
       </div>
 
       <div className="flex gap-2">
-        {isGenerated && (
-          <>
-            {/* <Button
-              type="submit"
-              variant="outline"
-              disabled={pending}
-              loading={pending}
-            >
-              Régénérer
-            </Button> */}
-
-            <Button onClick={goToNextStep} disabled={pending}>
-              Suivant
-            </Button>
-          </>
+        {generatedValue && (
+          <Button
+            variant="outline"
+            disabled={isLoading}
+            loading={isLoading}
+            onClick={onRegenerateClick}
+          >
+            Régénérer
+          </Button>
         )}
 
-        {!isGenerated && (
-          <Button type="submit" disabled={pending} loading={pending}>
+        {isNextStepGenerated && (
+          <Button onClick={goToNextStep} disabled={isLoading}>
+            Suivant
+          </Button>
+        )}
+
+        {!isNextStepGenerated && (
+          <Button type="submit" disabled={isLoading} loading={isLoading}>
             Suivant
           </Button>
         )}

@@ -3,12 +3,11 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "@/contexts/form-context";
 import { Label } from "@/components/ui/label";
-import { FormFooter } from "@/components/blocks/offers/form-footer";
 import { FormMessage } from "@/components/blocks/offers/form-message";
-import { useStepAction } from "@/hooks/use-step-action";
-import { generateStepOne, StepOneResponse } from "./actions";
-
-const initialState: StepOneResponse = {};
+import { OfferError } from "@/types/offer";
+import { validateAndGenerate } from "@/services/offer/generate-step";
+import { Button } from "@/components/ui/button";
+import { getStepConfigs } from "@/services/offer/step-configs";
 
 const offerPlaceholder = `Exemple : "J'aide les développeurs à trouver une mission en freelance grâce à la méthode Reach2Rich.
 Il s'agit d'une méthode pratiquement 100% asynchrone pour un prix de 1000€ HT."`;
@@ -18,12 +17,38 @@ const stepsPlaceholder = `Exemple : "Étape 1 : On refait votre offre.
 Étape 3 : On crée votre ligne éditoriale.
 Étape 4 : On vous apprend à créer des posts qui convertissent."`;
 
-export function StepOne() {
-  const { offer, setStep, isLoading } = useForm();
+export function FirstStep() {
+  const { offer, setStep, setOffer, isFetching: isLoading } = useForm();
 
-  const onSubmit = useStepAction(generateStepOne);
+  const allSteps = getStepConfigs(offer);
 
-  const [state, formAction, pending] = useActionState(onSubmit, initialState);
+  const onGenerate = async (
+    prevState: OfferError<Record<string, string[]>>,
+    formData: FormData
+  ) => {
+    if (!offer) return prevState;
+
+    const result = await validateAndGenerate(1, offer, formData);
+
+    if (result?.updatedOffer) {
+      setStep((s) => s + 1);
+      setOffer(result?.updatedOffer);
+    }
+
+    return result;
+  };
+
+  const [state, formAction, pending] = useActionState(onGenerate, {});
+
+  const nextStep = allSteps[1];
+
+  const isNextStepGenerated = nextStep?.isGenerated?.() ?? false;
+
+  const goToNextStep = () => {
+    setStep((stepNumber) =>
+      stepNumber + 1 <= allSteps.length ? stepNumber + 1 : stepNumber
+    );
+  };
 
   return (
     <form action={formAction}>
@@ -40,10 +65,10 @@ export function StepOne() {
             placeholder={offerPlaceholder}
             loading={isLoading}
             className={cn("mt-2 min-h-60 placeholder:text-gray-400/60", {
-              "border-red-500": state.inputErrors?.offer,
+              "border-red-500": state?.inputErrors?.offer,
             })}
           />
-          <FormMessage error={state.inputErrors?.offer} />
+          <FormMessage error={state?.inputErrors?.offer} />
         </div>
 
         <div>
@@ -58,10 +83,10 @@ export function StepOne() {
             placeholder={stepsPlaceholder}
             loading={isLoading}
             className={cn("mt-2 min-h-60 placeholder:text-gray-400/60", {
-              "border-red-500": state.inputErrors?.steps,
+              "border-red-500": state?.inputErrors?.steps,
             })}
           />
-          <FormMessage error={state.inputErrors?.steps} />
+          <FormMessage error={state?.inputErrors?.steps} />
         </div>
 
         <div>
@@ -78,11 +103,19 @@ export function StepOne() {
           <FormMessage error={state?.inputErrors?.cv} />
         </div>
 
-        <FormFooter
-          pending={pending}
-          isGenerated={!!offer?.offerJson?.generated?.steps}
-          goToNextStep={() => setStep(2)}
-        />
+        <div className="flex justify-end">
+          {isNextStepGenerated && (
+            <Button onClick={goToNextStep} disabled={pending}>
+              Suivant
+            </Button>
+          )}
+
+          {!isNextStepGenerated && (
+            <Button type="submit" disabled={pending} loading={pending}>
+              Suivant
+            </Button>
+          )}
+        </div>
       </div>
     </form>
   );

@@ -7,7 +7,7 @@ export function FormProgress({ currentStep, totalSteps }: FormProgressProps) {
   return (
     <div className="space-y-2">
       <h2 className="text-2xl font-bold">
-        Étape {currentStep} sur {totalSteps}
+        Étape {currentStep + 1} sur {totalSteps}
       </h2>
       <div className="w-full bg-gray-200 h-2 rounded-full">
         <div

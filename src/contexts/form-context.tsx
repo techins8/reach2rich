@@ -6,11 +6,15 @@ import { useParams } from "next/navigation";
 import { fetchOfferData } from "@/services/supabase/offers/offerRepository";
 
 interface FormContextType {
-  isLoading: boolean;
   offer: Offer | null;
   step: number;
+  isFetching: boolean;
+  isRegenerating: boolean;
+  isGenerating: boolean;
   setStep: React.Dispatch<React.SetStateAction<number>>;
   setOffer: React.Dispatch<React.SetStateAction<Offer | null>>;
+  setIsRegenerating: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined);
@@ -19,18 +23,18 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   const { id } = useParams();
   const [step, setStep] = useState(1);
   const [offer, setOffer] = useState<Offer | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(true);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     const fetchOffer = async () => {
-      setIsLoading(true);
+      setIsFetching(true);
 
       const offer = await fetchOfferData(id as string);
 
-      console.log("offer", offer);
-
       setOffer(offer);
-      setIsLoading(false);
+      setIsFetching(false);
     };
 
     if (id) {
@@ -41,11 +45,15 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   return (
     <FormContext.Provider
       value={{
-        isLoading,
         offer,
         step,
+        isFetching,
+        isRegenerating,
+        isGenerating,
         setStep,
         setOffer,
+        setIsRegenerating,
+        setIsGenerating,
       }}
     >
       {children}
