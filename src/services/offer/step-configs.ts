@@ -126,6 +126,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
             "Le champ 'doNothing' doit contenir au moins 200 caractères."
           ),
       }),
+      prompt: offer ? getPrompts(offer)["doNothing"] : undefined,
     },
     {
       key: "fillTheForm",

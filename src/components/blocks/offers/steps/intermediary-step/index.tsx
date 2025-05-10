@@ -12,7 +12,7 @@ interface GenericStepProps {
   stepNumber: number;
 }
 
-export function GenericStep({ stepNumber }: GenericStepProps) {
+export function IntermediaryStep({ stepNumber }: GenericStepProps) {
   const { offer, setStep, isFetching, setOffer } = useForm();
 
   const allSteps = getStepConfigs(offer);

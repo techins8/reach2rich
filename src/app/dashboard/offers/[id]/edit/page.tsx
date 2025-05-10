@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { FormProgress } from "@/components/blocks/offers/form-progress";
 import { FirstStep } from "@/components/blocks/offers/steps/first-step";
-import { GenericStep } from "@/components/blocks/offers/steps/generic-step";
+import { IntermediaryStep } from "@/components/blocks/offers/steps/intermediary-step";
 
 import { FormProvider, useForm } from "@/contexts/form-context";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ function FormContent() {
       <FormProgress currentStep={step} totalSteps={TOTAL_STEPS} />
 
       {step === 0 && <FirstStep />}
-      {step > 0 && step < TOTAL_STEPS && <GenericStep stepNumber={step} />}
+      {step > 0 && step < TOTAL_STEPS && <IntermediaryStep stepNumber={step} />}
       {step === TOTAL_STEPS && <LastStep />}
     </>
   );

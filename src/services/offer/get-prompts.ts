@@ -542,7 +542,7 @@ Ton objectif est de transformer le contenu entre <<< et >>> en une section intit
 3. Dans le bloc "Tu ne fais rien", mets l'accent sur la perte de CA potentielle sous forme de calcul.  
 4. Le contenu des phrases doit être un calcul de non rentabilité de l'inaction pour le bloc "Tu ne fais rien".
 L'inverse pour le bloc "Tu remplis ce formulaire" qu'on fera plus tard.
-5. Tu va respecter le format exact qui se trouve entre les caractères [[[ et ]]] :
+5. Tu dois respecter le format exact qui se trouve entre les caractères [[[ et ]]] :
 6. Tu dois appliuer ça à l'offre qui est entre <<< et >>>
 7. Tu trouveras un exemple complet de ce que je te demande entre les caractères ((( et )))
 8. Pour la phrase choc finale, choisi vraiment quelque chose qui fait envie à un freelance qui veut devenir riche.
@@ -602,8 +602,8 @@ ${offer.offerJson?.generated?.painPoints}
 FORMAT ATTENDU :
 - Pas d'émojis, pas de promesses floues, pas de blabla.  
 - Mets des points à la fin des phrases.  
-- Tu ne dois pas utiliser de markdown, pas de gras, ni de **, pas de souligné, pas de italique, pas de titres.
-- Le retour ne doit contenir que ce qui est demandé, au même format que le texte entre <<< et >>>.
+- Tu ne dois pas utiliser de markdown, pas de gras, ni de **, pas de souligné, pas de italique, pas de titres, pas de [ ni ].
+- Le retour ne doit contenir QUE ce qui est demandé, au même format que le texte entre <<< et >>>.
 - Tu dois impérativement t'inspirer de l'exemple mais ne pas le copier.  
 `,
     fillTheForm: `TON RÔLE :
@@ -683,8 +683,8 @@ ${offer.offerJson?.generated?.FAQ}
 FORMAT ATTENDU :
 - Pas d'émojis, pas de promesses floues, pas de blabla.  
 - Mets des points à la fin des phrases.  
-- Tu ne dois pas utiliser de markdown, pas de gras, ni de **, pas de souligné, pas de italique, pas de titres.
-- Le retour ne doit contenir que ce qui est demandé, au même format que le texte entre <<< et >>>.
+- Tu ne dois pas utiliser de markdown, pas de gras, ni de **, pas de souligné, pas de italique, pas de titres, pas de [ ni ].
+- Le retour ne doit contenir QUE ce qui est demandé, au même format que le texte entre <<< et >>>.
 - Tu dois impérativement t'inspirer de l'exemple mais ne pas le copier.  
 `,
   } as const;
