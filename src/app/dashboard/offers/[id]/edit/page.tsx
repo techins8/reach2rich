@@ -36,8 +36,10 @@ function FormContent() {
       <FormProgress currentStep={step} totalSteps={TOTAL_STEPS} />
 
       {step === 0 && <FirstStep />}
-      {step > 0 && step < TOTAL_STEPS && <IntermediaryStep stepNumber={step} />}
-      {step === TOTAL_STEPS && <LastStep />}
+      {step > 0 && step < TOTAL_STEPS - 1 && (
+        <IntermediaryStep stepNumber={step} />
+      )}
+      {step === TOTAL_STEPS - 1 && <LastStep />}
     </>
   );
 }

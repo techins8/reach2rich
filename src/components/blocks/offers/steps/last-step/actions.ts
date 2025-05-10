@@ -7,9 +7,9 @@ import { Offer, OfferError } from "@/types/offer";
 import { updateOffer } from "@/services/supabase/offers/offerRepository";
 
 const lastStepSchema = z.object({
-  fillTheForm: z
-    .string()
-    .min(200, "Le champ 'fillTheForm' doit contenir au moins 200 caractères."),
+  fillTheForm: z.string().min(50, {
+    message: "Le champ doit contenir au moins 50 caractères.",
+  }),
 });
 
 export type LastStepResponse = OfferError<{
@@ -20,7 +20,21 @@ export async function saveOffer(
   offer: Offer,
   formData: FormData
 ): Promise<LastStepResponse> {
+  if (!offer) {
+    return {
+      error: "Aucune offre n'a été trouvée",
+    };
+  }
+
   const fillTheForm = formData.get("fillTheForm") as string;
+
+  if (!fillTheForm) {
+    return {
+      inputErrors: {
+        fillTheForm: ["Le champ est requis"],
+      },
+    };
+  }
 
   const validationResult = lastStepSchema.safeParse({ fillTheForm });
 
@@ -46,7 +60,8 @@ export async function saveOffer(
       inputErrors: undefined,
       updatedOffer,
     };
-  } catch {
+  } catch (error) {
+    console.error("Error saving offer:", error);
     return {
       error: "Une erreur inconnue est survenue, veuillez réessayer plus tard.",
     };

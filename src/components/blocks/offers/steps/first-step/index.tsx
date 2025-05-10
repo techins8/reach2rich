@@ -1,122 +1,192 @@
-import { useActionState } from "react";
-import { cn } from "@/lib/utils";
+import { useState, useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "@/contexts/form-context";
-import { Label } from "@/components/ui/label";
-import { FormMessage } from "@/components/blocks/offers/form-message";
-import { OfferError } from "@/types/offer";
-import { validateAndGenerate } from "@/services/offer/generate-step";
-import { Button } from "@/components/ui/button";
+import { useForm as useFormContext } from "@/contexts/form-context";
+import { generate } from "@/services/offer/generate-step";
 import { getStepConfigs } from "@/services/offer/step-configs";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const offerPlaceholder = `Exemple : "J'aide les développeurs à trouver une mission en freelance grâce à la méthode Reach2Rich.
-Il s'agit d'une méthode pratiquement 100% asynchrone pour un prix de 1000€ HT."`;
+Je vends un accompagnement personnalisé pour 997€."`;
 
-const stepsPlaceholder = `Exemple : "Étape 1 : On refait votre offre.
-Étape 2 : On refait votre profil LinkedIn.
+const stepsPlaceholder = `Exemple :
+Étape 1 : On analyse votre profil et votre marché.
+Étape 2 : On crée votre offre.
 Étape 3 : On crée votre ligne éditoriale.
 Étape 4 : On vous apprend à créer des posts qui convertissent."`;
 
+const formSchema = z.object({
+  offer: z.string().min(50, {
+    message: "Le champ 'offre' doit contenir au moins 50 caractères.",
+  }),
+  steps: z.string().min(50, {
+    message: "Le champ 'déroulé' doit contenir au moins 50 caractères.",
+  }),
+  cv: z.string().min(200, {
+    message: "Le champ 'CV' doit contenir au moins 200 caractères.",
+  }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 export function FirstStep() {
-  const { offer, setStep, setOffer, isFetching: isLoading } = useForm();
+  const { offer, setStep, setOffer, isFetching: isLoading } = useFormContext();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const allSteps = getStepConfigs(offer);
 
-  const onGenerate = async (
-    prevState: OfferError<Record<string, string[]>>,
-    formData: FormData
-  ) => {
-    if (!offer) return prevState;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      offer: offer?.offerJson?.userInput?.offer ?? "",
+      steps: offer?.offerJson?.userInput?.steps ?? "",
+      cv: offer?.offerJson?.userInput?.cv ?? "",
+    },
+  });
 
-    const result = await validateAndGenerate(1, offer, formData);
-
-    if (result?.updatedOffer) {
-      setStep((s) => s + 1);
-      setOffer(result?.updatedOffer);
+  useEffect(() => {
+    if (offer) {
+      form.reset({
+        offer: offer.offerJson.userInput.offer ?? "",
+        steps: offer.offerJson.userInput.steps ?? "",
+        cv: offer.offerJson.userInput.cv ?? "",
+      });
     }
+  }, [offer, form]);
 
-    return result;
-  };
+  const handleSubmit = useCallback(
+    async (values: FormValues) => {
+      if (!offer) return;
+      setIsGenerating(true);
 
-  const [state, formAction, pending] = useActionState(onGenerate, {});
+      try {
+        const result = await generate(1, {
+          ...offer,
+          offerJson: {
+            ...offer.offerJson,
+            userInput: {
+              ...offer.offerJson.userInput,
+              ...values,
+            },
+          },
+        });
+
+        if (result?.updatedOffer) {
+          setStep((s: number) => s + 1);
+          setOffer(result.updatedOffer);
+        }
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [offer, setStep, setOffer]
+  );
 
   const nextStep = allSteps[1];
-
   const isNextStepGenerated = nextStep?.isGenerated?.() ?? false;
 
   const goToNextStep = () => {
-    setStep((stepNumber) =>
+    setStep((stepNumber: number) =>
       stepNumber + 1 <= allSteps.length ? stepNumber + 1 : stepNumber
     );
   };
 
   return (
-    <form action={formAction}>
+    <Form {...form}>
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="offer">
-            Quelle est votre offre ? Qu&apos;est-ce que vous vendez et à qui ?
-            Combien ?
-          </Label>
-          <Textarea
-            rows={4}
-            name="offer"
-            defaultValue={offer?.offerJson?.userInput?.offer ?? ""}
-            placeholder={offerPlaceholder}
-            loading={isLoading}
-            className={cn("mt-2 min-h-60 placeholder:text-gray-400/60", {
-              "border-red-500": state?.inputErrors?.offer,
-            })}
-          />
-          <FormMessage error={state?.inputErrors?.offer} />
-        </div>
+        <FormField
+          control={form.control}
+          name="offer"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Quelle est votre offre ? Qu&apos;est-ce que vous vendez et à qui
+                ? Combien ?
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={4}
+                  loading={isLoading}
+                  className="mt-2 min-h-60 placeholder:text-gray-400/60"
+                  placeholder={offerPlaceholder}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <Label htmlFor="steps">
-            Quel est le déroulé de votre offre ? (Étape 1 ; Étape 2 ; ...)
-          </Label>
-          <Textarea
-            rows={4}
-            id="steps"
-            name="steps"
-            defaultValue={offer?.offerJson?.userInput?.steps ?? ""}
-            placeholder={stepsPlaceholder}
-            loading={isLoading}
-            className={cn("mt-2 min-h-60 placeholder:text-gray-400/60", {
-              "border-red-500": state?.inputErrors?.steps,
-            })}
-          />
-          <FormMessage error={state?.inputErrors?.steps} />
-        </div>
+        <FormField
+          control={form.control}
+          name="steps"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Quel est le déroulé de votre offre ? (Étape 1 ; Étape 2 ; ...)
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={4}
+                  loading={isLoading}
+                  className="mt-2 min-h-60 placeholder:text-gray-400/60"
+                  placeholder={stepsPlaceholder}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <Label htmlFor="cv">Votre CV</Label>
-          <Textarea
-            rows={8}
-            name="cv"
-            loading={isLoading}
-            defaultValue={offer?.offerJson?.userInput?.cv}
-            className={cn("mt-2 min-h-60", {
-              "border-red-500": state?.inputErrors?.cv,
-            })}
-          />
-          <FormMessage error={state?.inputErrors?.cv} />
-        </div>
+        <FormField
+          control={form.control}
+          name="cv"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Votre CV</FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={8}
+                  loading={isLoading}
+                  className="mt-2 min-h-60"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end">
           {isNextStepGenerated && (
-            <Button onClick={goToNextStep} disabled={pending}>
+            <Button onClick={goToNextStep} disabled={isGenerating}>
               Suivant
             </Button>
           )}
 
           {!isNextStepGenerated && (
-            <Button type="submit" disabled={pending} loading={pending}>
+            <Button
+              type="button"
+              disabled={isGenerating}
+              loading={isGenerating}
+              onClick={form.handleSubmit(handleSubmit)}
+            >
               Suivant
             </Button>
           )}
         </div>
       </div>
-    </form>
+    </Form>
   );
 }

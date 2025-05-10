@@ -21,7 +21,7 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 
 export function FormProvider({ children }: { children: React.ReactNode }) {
   const { id } = useParams();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);

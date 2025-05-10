@@ -1,52 +1,118 @@
+import { useState, useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "@/contexts/form-context";
-import { useActionState } from "react";
-import { saveOffer, LastStepResponse as LestStepResponse } from "./actions";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { FormMessage } from "@/components/blocks/offers/form-message";
+import { useForm as useFormContext } from "@/contexts/form-context";
+import { saveOffer } from "./actions";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { generate } from "@/services/offer/generate-step";
 
-const initialState: LestStepResponse = {};
+const formSchema = z.object({
+  fillTheForm: z.string().min(50, {
+    message: "Le champ doit contenir au moins 50 caractères.",
+  }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export function LastStep() {
-  const { offer, setStep, isFetching: isLoading } = useForm();
+  const { offer, setStep, isFetching: isLoading, setOffer } = useFormContext();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
-  const [state, formAction, pending] = useActionState(
-    async (prevState: LestStepResponse, formData: FormData) => {
-      if (!offer) return prevState;
-
-      const result = await saveOffer(offer, formData);
-
-      if (result?.updatedOffer) {
-        toast.success("Offre finalisée avec succès");
-
-        redirect(`/dashboard/offers/${offer.id}`);
-      }
-
-      return result;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fillTheForm: offer?.offerJson.generated.fillTheForm ?? "",
     },
-    initialState
+  });
+
+  useEffect(() => {
+    if (offer) {
+      form.reset({
+        fillTheForm: offer.offerJson.generated.fillTheForm ?? "",
+      });
+    }
+  }, [offer, form]);
+
+  const handleSubmit = useCallback(
+    async (values: FormValues) => {
+      if (!offer) return;
+      setIsSaving(true);
+
+      try {
+        const formData = new FormData();
+        formData.append("fillTheForm", values.fillTheForm);
+
+        const result = await saveOffer(offer, formData);
+
+        if (result?.updatedOffer) {
+          toast.success("Offre finalisée avec succès");
+          redirect(`/dashboard/offers/${offer.id}`);
+        } else if (result?.error) {
+          toast.error(result.error);
+        }
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [offer]
   );
 
+  const handleRegenerate = useCallback(async () => {
+    if (!offer) return;
+    setIsRegenerating(true);
+
+    try {
+      const result = await generate(9, offer);
+
+      if (result?.updatedOffer) {
+        setOffer(result.updatedOffer);
+        form.reset({
+          fillTheForm:
+            result.updatedOffer.offerJson.generated.fillTheForm ?? "",
+        });
+      }
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [offer, setOffer, form]);
+
+  const isCurrentStepGenerated = offer?.offerJson.generated.fillTheForm != null;
+
   return (
-    <form action={formAction}>
+    <Form {...form}>
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="fillTheForm">Si tu remplis ce formulaire :</Label>
-          <Textarea
-            rows={12}
-            name="fillTheForm"
-            loading={isLoading}
-            defaultValue={offer?.offerJson.generated.fillTheForm}
-            className={cn("mt-2 min-h-60", {
-              "border-red-500": state?.inputErrors?.fillTheForm,
-            })}
-          />
-          <FormMessage error={state?.inputErrors?.fillTheForm} />
-        </div>
+        <FormField
+          control={form.control}
+          name="fillTheForm"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Si tu remplis ce formulaire :</FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={12}
+                  loading={isLoading}
+                  disabled={isLoading}
+                  className="mt-2 min-h-60"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-between">
           <div>
@@ -54,31 +120,36 @@ export function LastStep() {
               type="button"
               variant="outline"
               onClick={() => setStep(9)}
-              disabled={pending}
+              disabled={isSaving || isRegenerating}
             >
               Précédent
             </Button>
           </div>
 
           <div className="flex gap-2">
-            {/* {generatedValue && (
+            {isCurrentStepGenerated && (
               <Button
                 type="button"
                 variant="outline"
-                disabled={isRegenerating || isGenerating}
+                disabled={isRegenerating || isSaving}
                 loading={isRegenerating}
-                onClick={regenerateAction}
+                onClick={handleRegenerate}
               >
                 Régénérer
               </Button>
-            )} */}
+            )}
 
-            <Button type="submit" loading={pending} disabled={pending}>
+            <Button
+              type="button"
+              loading={isSaving}
+              disabled={isSaving || isRegenerating}
+              onClick={form.handleSubmit(handleSubmit)}
+            >
               Suivant
             </Button>
           </div>
         </div>
       </div>
-    </form>
+    </Form>
   );
 }

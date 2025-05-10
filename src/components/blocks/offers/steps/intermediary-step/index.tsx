@@ -1,65 +1,98 @@
-import { useActionState } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "@/contexts/form-context";
-import { Label } from "@/components/ui/label";
-import { FormMessage } from "@/components/blocks/offers/form-message";
-import { cn } from "@/lib/utils";
-import { validateAndGenerate, generate } from "@/services/offer/generate-step";
+import { useForm as useFormContext } from "@/contexts/form-context";
+import { generate } from "@/services/offer/generate-step";
 import { getStepConfigs } from "@/services/offer/step-configs";
-import { OfferError } from "@/types/offer";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
 interface GenericStepProps {
   stepNumber: number;
 }
 
 export function IntermediaryStep({ stepNumber }: GenericStepProps) {
-  const { offer, setStep, isFetching, setOffer } = useForm();
+  const { offer, setStep, isFetching, setOffer } = useFormContext();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const allSteps = getStepConfigs(offer);
-
-  const onGenerate = async (
-    prevState: OfferError<Record<string, string[]>>,
-    formData: FormData
-  ) => {
-    if (!offer) return prevState;
-
-    const result = await validateAndGenerate(stepNumber, offer, formData);
-
-    if (result?.updatedOffer) {
-      setStep((s) => s + 1);
-      setOffer(result?.updatedOffer);
-    }
-
-    return result;
-  };
-
-  const onRegenerate = async () => {
-    if (!offer) return;
-
-    const result = await generate(stepNumber - 1, offer);
-
-    if (result?.updatedOffer) {
-      setOffer(result?.updatedOffer);
-    }
-
-    return result;
-  };
-
-  const [state, formAction, isGenerating] = useActionState(onGenerate, {});
-  const [, regenerateAction, isRegenerating] = useActionState(onRegenerate, {});
-
   const currentStep = allSteps[stepNumber];
   const nextStep = allSteps[stepNumber + 1];
 
-  const generatedValue =
-    offer?.offerJson?.generated?.[
-      currentStep.key as keyof typeof offer.offerJson.generated
-    ];
+  type FormValues = {
+    [key: string]: string;
+  };
 
-  const defaultValues =
-    generatedValue ?? state?.inputValues?.[currentStep.key as string];
+  const form = useForm<FormValues>({
+    resolver: zodResolver(currentStep.schema ?? z.object({})),
+    defaultValues: {
+      [currentStep.key as string]:
+        offer?.offerJson?.generated?.[
+          currentStep.key as keyof typeof offer.offerJson.generated
+        ] ?? "",
+    },
+  });
+
+  useEffect(() => {
+    if (offer && currentStep.key) {
+      form.reset({
+        [currentStep.key]:
+          offer.offerJson.generated[
+            currentStep.key as keyof typeof offer.offerJson.generated
+          ] ?? "",
+      });
+    }
+  }, [stepNumber, offer, form, currentStep.key]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!offer || !currentStep.key) return;
+    setIsGenerating(true);
+
+    try {
+      const result = await generate(stepNumber, offer);
+
+      if (result?.updatedOffer) {
+        setStep((s) => s + 1);
+        setOffer(result.updatedOffer);
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [offer, stepNumber, setStep, setOffer, currentStep.key]);
+
+  const handleRegenerate = useCallback(async () => {
+    if (!offer || !currentStep.key) return;
+    setIsRegenerating(true);
+
+    try {
+      const result = await generate(stepNumber - 1, offer);
+
+      if (result?.updatedOffer) {
+        setOffer(result.updatedOffer);
+        form.reset({
+          [currentStep.key]:
+            result.updatedOffer.offerJson.generated[
+              currentStep.key as keyof typeof result.updatedOffer.offerJson.generated
+            ] ?? "",
+        });
+      }
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [offer, stepNumber, setOffer, form, currentStep.key]);
 
   const isNextStepGenerated = nextStep?.isGenerated?.() ?? false;
+  const isCurrentStepGenerated = currentStep?.isGenerated?.() ?? false;
 
   const goToNextStep = () => {
     setStep((stepNumber) =>
@@ -72,24 +105,27 @@ export function IntermediaryStep({ stepNumber }: GenericStepProps) {
   };
 
   return (
-    <form action={formAction} key={stepNumber}>
+    <Form {...form}>
       <div className="space-y-4">
-        <div>
-          <Label htmlFor={currentStep.key}>{currentStep.name}</Label>
-          <Textarea
-            rows={12}
-            name={currentStep.key}
-            loading={isFetching}
-            disabled={isFetching}
-            defaultValue={defaultValues}
-            className={cn("mt-2 min-h-60", {
-              "border-red-500": state?.inputErrors?.[currentStep.key as string],
-            })}
-          />
-          <FormMessage
-            error={state?.inputErrors?.[currentStep.key as string]}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name={currentStep.key as string}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{currentStep.name}</FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={12}
+                  loading={isFetching}
+                  disabled={isFetching}
+                  className="mt-2 min-h-60"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-between">
           <div>
@@ -106,13 +142,13 @@ export function IntermediaryStep({ stepNumber }: GenericStepProps) {
           </div>
 
           <div className="flex gap-2">
-            {generatedValue && (
+            {isCurrentStepGenerated && (
               <Button
                 type="button"
                 variant="outline"
                 disabled={isRegenerating || isGenerating}
                 loading={isRegenerating}
-                onClick={regenerateAction}
+                onClick={handleRegenerate}
               >
                 Régénérer
               </Button>
@@ -129,9 +165,10 @@ export function IntermediaryStep({ stepNumber }: GenericStepProps) {
 
             {!isNextStepGenerated && (
               <Button
-                type="submit"
+                type="button"
                 disabled={isGenerating || isRegenerating}
                 loading={isGenerating}
+                onClick={form.handleSubmit(handleSubmit)}
               >
                 Suivant
               </Button>
@@ -139,6 +176,6 @@ export function IntermediaryStep({ stepNumber }: GenericStepProps) {
           </div>
         </div>
       </div>
-    </form>
+    </Form>
   );
 }
