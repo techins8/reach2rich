@@ -7,6 +7,7 @@ export type StepConfig = {
   key?: keyof Offer["offerJson"]["generated"];
   schema?: z.ZodSchema;
   prompt?: string;
+  canGoToNext?: (offer: Offer) => boolean;
 };
 
 export type StepResponse = OfferError<Record<string, string[]>>;

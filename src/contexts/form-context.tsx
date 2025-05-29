@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Offer } from "@/types/offer";
 import { useParams } from "next/navigation";
 import { fetchOfferData } from "@/services/supabase/offers/offerRepository";
+import { getStepConfigs } from "@/services/offer/step-configs";
 
 interface FormContextType {
   offer: Offer | null;
@@ -35,6 +36,27 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
 
       setOffer(offer);
       setIsFetching(false);
+
+      if (offer) {
+        const allSteps = getStepConfigs(offer);
+
+        if (offer.offerJson?.generated?.fillTheForm) {
+          setStep(0);
+          return;
+        }
+
+        let lastCompletedStep = 0;
+
+        for (let i = 0; i < allSteps.length; i++) {
+          const currentStep = allSteps[i];
+          if (currentStep.canGoToNext?.(offer)) {
+            lastCompletedStep = i;
+          } else {
+            break;
+          }
+        }
+        setStep(lastCompletedStep);
+      }
     };
 
     if (id) {

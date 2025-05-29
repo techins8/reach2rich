@@ -42,6 +42,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function FirstStep() {
   const { offer, setStep, setOffer, isFetching: isLoading } = useFormContext();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasFormChanged, setHasFormChanged] = useState(false);
 
   const allSteps = getStepConfigs(offer);
 
@@ -57,12 +58,25 @@ export function FirstStep() {
   useEffect(() => {
     if (offer) {
       form.reset({
-        offer: offer.offerJson.userInput.offer ?? "",
-        steps: offer.offerJson.userInput.steps ?? "",
-        cv: offer.offerJson.userInput.cv ?? "",
+        offer: offer?.offerJson?.userInput?.offer ?? "",
+        steps: offer?.offerJson?.userInput?.steps ?? "",
+        cv: offer?.offerJson?.userInput?.cv ?? "",
       });
+      setHasFormChanged(false);
     }
   }, [offer, form]);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (!offer?.offerJson?.userInput) return;
+      setHasFormChanged(
+        value.offer !== offer.offerJson.userInput.offer ||
+          value.steps !== offer.offerJson.userInput.steps ||
+          value.cv !== offer.offerJson.userInput.cv
+      );
+    });
+    return () => subscription.unsubscribe();
+  }, [form, offer]);
 
   const handleSubmit = useCallback(
     async (values: FormValues) => {
@@ -70,7 +84,7 @@ export function FirstStep() {
       setIsGenerating(true);
 
       try {
-        const result = await generate(1, {
+        const result = await generate(0, {
           ...offer,
           offerJson: {
             ...offer.offerJson,
@@ -169,13 +183,13 @@ export function FirstStep() {
         />
 
         <div className="flex justify-end">
-          {isNextStepGenerated && (
+          {isNextStepGenerated && !hasFormChanged && (
             <Button onClick={goToNextStep} disabled={isGenerating}>
               Suivant
             </Button>
           )}
 
-          {!isNextStepGenerated && (
+          {(hasFormChanged || !isNextStepGenerated) && (
             <Button
               type="button"
               disabled={isGenerating}

@@ -12,6 +12,7 @@ export const generate = async (
   offer: Offer
 ): Promise<StepResponse> => {
   const steps = getStepConfigs(offer);
+
   const nextStep = steps[step + 1];
 
   if (!nextStep) {

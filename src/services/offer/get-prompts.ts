@@ -1,7 +1,5 @@
 import { Offer } from "@/types/offer";
 
-export type PromptIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11;
-
 export const getPrompts = (offer: Offer) => {
   return {
     steps: `TON RÔLE :
@@ -82,11 +80,11 @@ Durée des rendez-vous : 1h
 
 [[[
 L'offre :
-${offer.offerJson.userInput.offer}
+${offer?.offerJson?.userInput?.offer}
 ]]]
 
 Le déroulé de l'offre :
-(((${offer.offerJson.userInput.steps})))
+(((${offer?.offerJson?.userInput?.steps})))
 
 FORMAT ATTENDU :
 - Tu dois mettre autant de phases qu'il y en a dans mon offre.  

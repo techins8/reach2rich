@@ -7,11 +7,16 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
   return [
     {
       name: "Vos informations",
+      canGoToNext: (offer) =>
+        !!offer?.offerJson?.userInput?.offer &&
+        !!offer?.offerJson?.userInput?.steps &&
+        !!offer?.offerJson?.userInput?.cv,
     },
     {
       key: "steps",
       name: "Le déroulé de l'offre",
       isGenerated: () => !!offer?.offerJson?.generated?.steps,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.steps,
       schema: z.object({
         steps: z
           .string()
@@ -26,6 +31,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "whoAmI",
       name: "Qui suis-je ?",
       isGenerated: () => !!offer?.offerJson?.generated?.whoAmI,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.whoAmI,
       schema: z.object({
         whoAmI: z
           .string()
@@ -37,6 +43,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "included",
       name: "Ce qui est inclus",
       isGenerated: () => !!offer?.offerJson?.generated?.included,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.included,
       schema: z.object({
         included: z
           .string()
@@ -51,6 +58,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "notIncluded",
       name: "Ce qui n'est pas inclus",
       isGenerated: () => !!offer?.offerJson?.generated?.notIncluded,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.notIncluded,
       schema: z.object({
         notIncluded: z
           .string()
@@ -65,6 +73,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "doneForYou",
       name: "Pour toi si...",
       isGenerated: () => !!offer?.offerJson?.generated?.doneForYou,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.doneForYou,
       schema: z.object({
         doneForYou: z
           .string()
@@ -79,6 +88,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "notDoneForYou",
       name: "Pas pour toi si...",
       isGenerated: () => !!offer?.offerJson?.generated?.notDoneForYou,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.notDoneForYou,
       schema: z.object({
         notDoneForYou: z
           .string()
@@ -93,6 +103,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "FAQ",
       name: "Les questions fréquentes",
       isGenerated: () => !!offer?.offerJson?.generated?.FAQ,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.FAQ,
       schema: z.object({
         FAQ: z
           .string()
@@ -104,6 +115,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "painPoints",
       name: "Tu te reconnais ?",
       isGenerated: () => !!offer?.offerJson?.generated?.painPoints,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.painPoints,
       schema: z.object({
         painPoints: z
           .string()
@@ -118,6 +130,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "doNothing",
       name: "Si tu ne fais rien",
       isGenerated: () => !!offer?.offerJson?.generated?.doNothing,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.doNothing,
       schema: z.object({
         doNothing: z
           .string()
@@ -132,6 +145,7 @@ export const getStepConfigs = (offer?: Offer | null): StepConfig[] => {
       key: "fillTheForm",
       name: "Si tu remplis ce formulaire",
       isGenerated: () => !!offer?.offerJson?.generated?.fillTheForm,
+      canGoToNext: (offer) => !!offer?.offerJson?.generated?.fillTheForm,
       schema: z.object({
         fillTheForm: z
           .string()
