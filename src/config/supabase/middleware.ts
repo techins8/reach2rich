@@ -25,7 +25,8 @@ export async function updateSession(request: NextRequest) {
     return redirect("/login");
   }
 
-  const isVerified = await isUserVerified(supabase, user);
+  // TEMPORARY: Purchase check disabled - all authenticated users have access
+  const isVerified = true; // await isUserVerified(supabase, user);
 
   if (!isVerified) {
     if (pathname === "/not-authorized") {
