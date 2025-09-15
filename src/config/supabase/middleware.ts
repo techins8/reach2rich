@@ -5,6 +5,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
   const { supabase, response, user } = await authenticateUser(request);
+  // Mark as intentionally referenced to satisfy lint when checks are disabled
+  void supabase;
 
   const pathname = request.nextUrl.pathname;
 
@@ -26,6 +28,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // TEMPORARY: Purchase check disabled - all authenticated users have access
+  // Keep a no-op reference to the verifier to avoid unused warnings during builds
+  void isUserVerified;
   const isVerified = true; // await isUserVerified(supabase, user);
 
   if (!isVerified) {

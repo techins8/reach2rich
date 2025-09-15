@@ -1,34 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Reach2Rich
+
+A Next.js application for creating AI-generated offers with multi-step form workflows and Supabase authentication.
+
+## Features
+
+- **AI-Generated Offers**: Create comprehensive offers using OpenAI integration
+- **Multi-Step Forms**: Progressive form completion with validation
+- **Authentication**: Secure login/logout with Supabase Auth
+- **Dashboard**: Protected dashboard with sidebar navigation
+- **Course Integration**: Verify user access via Systeme.io API
+- **Modern UI**: Built with Tailwind CSS and shadcn/ui components
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Frontend**: React 19, TypeScript, Tailwind CSS
+- **UI Components**: shadcn/ui (Radix primitives)
+- **Backend**: Supabase (Auth & Database)
+- **AI**: OpenAI API
+- **Forms**: React Hook Form + Zod validation
+- **Testing**: Vitest + Playwright
+- **Package Manager**: pnpm
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- pnpm
+- Supabase project
+- OpenAI API key
+
+### Installation
 
 ```bash
-pnpm dev
-# or
-npm run dev
-# or
-bun dev
+# Clone the repository
+git clone <repository-url>
+cd reach2rich
+
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase and OpenAI credentials
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start development server
+pnpm dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run tests
+pnpm test
 
-## Learn More
+# Run tests in watch mode
+pnpm test:watch
 
-To learn more about Next.js, take a look at the following resources:
+# Build for production
+pnpm build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start production server
+pnpm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/                    # Next.js App Router
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   └── blocks/            # Application components
+├── services/              # API integrations
+├── config/                # Configuration files
+├── lib/                   # Utilities
+├── hooks/                 # Custom React hooks
+└── types/                 # TypeScript definitions
+```

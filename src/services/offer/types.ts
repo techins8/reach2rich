@@ -5,7 +5,7 @@ export type StepConfig = {
   name: string;
   isGenerated?: () => boolean;
   key?: keyof Offer["offerJson"]["generated"];
-  schema?: z.ZodSchema;
+  schema?: z.ZodTypeAny;
   prompt?: string;
   canGoToNext?: (offer: Offer) => boolean;
 };
